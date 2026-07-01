@@ -1,0 +1,17 @@
+# Blueprint Render — déploie le backend proxy.
+# Sur Render : New > Blueprint, sélectionne ce repo.
+# N'oublie pas de définir PRICELABS_API_KEY dans les variables d'environnement.
+
+services:
+  - type: web
+    name: pricelabs-estimator-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PRICELABS_API_KEY
+        sync: false          # à saisir manuellement dans le dashboard Render
+      - key: MAX_REAL_CALLS
+        value: "20"
