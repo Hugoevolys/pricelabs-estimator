@@ -1,8 +1,6 @@
 import { useState } from "react";
 import AdvisorFields from "./AdvisorFields.jsx";
 
-const CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD"];
-
 export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorChange }) {
   // Adresse découpée en champs distincts (recomposée avant l'envoi)
   const [streetNumber, setStreetNumber] = useState("");
@@ -14,18 +12,13 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
   const [longitude, setLongitude] = useState("");
 
   const [bedrooms, setBedrooms] = useState("2");
-  const [currency, setCurrency] = useState("EUR");
   const [demo, setDemo] = useState(true);
 
   // Filtres avancés (uniquement ceux réellement supportés par l'API PriceLabs)
   const [showFilters, setShowFilters] = useState(true); // ouverts par défaut
-  const [bathMin, setBathMin] = useState("");        // salles de bain min
-  const [bathMax, setBathMax] = useState("");        // salles de bain max
+  const [bathrooms, setBathrooms] = useState("");    // nombre de salles de bain
   const [guestMin, setGuestMin] = useState("");      // capacité min
   const [guestMax, setGuestMax] = useState("");      // capacité max
-  const [ratingMin, setRatingMin] = useState("");    // note min des comparables
-  const [ratingMax, setRatingMax] = useState("");    // note max des comparables
-  const [reviewMin, setReviewMin] = useState("");    // nombre d'avis min des comparables
   const [pool, setPool] = useState(false);
   const [hottub, setHottub] = useState(false);
 
@@ -48,16 +41,10 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
     const f = {};
     if (pool) f.pool = 1;
     if (hottub) f.hottub = 1;
-    const bath = intRange(bathMin, bathMax);
-    if (bath) f.bathroom = bath;
+    // Salles de bain : nombre exact (entre N-1 et N+1 exclus)
+    if (bathrooms !== "") f.bathroom = { gt: Number(bathrooms) - 1, lt: Number(bathrooms) + 1 };
     const guests = intRange(guestMin, guestMax);
     if (guests) f.max_guest = guests;
-    // Note (décimale) : bornes directes
-    const rating = {};
-    if (ratingMin !== "") rating.gt = Number(ratingMin);
-    if (ratingMax !== "") rating.lt = Number(ratingMax);
-    if (Object.keys(rating).length) f.ratings = rating;
-    if (reviewMin) f.review_count = { gt: Number(reviewMin) - 1 }; // "au moins N avis"
     return Object.keys(f).length ? JSON.stringify(f) : "";
   }
 
@@ -68,7 +55,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
       latitude: latitude.trim(),
       longitude: longitude.trim(),
       bedrooms: bedrooms.trim(),
-      currency,
+      currency: "EUR",
       version: "2",
       monthly: "true",
       demo: demo ? "true" : "false",
@@ -164,15 +151,6 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
             required
           />
         </label>
-
-        <label>
-          Devise
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div className="row">
@@ -199,18 +177,13 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
           <p className="hint">
             Ces filtres restreignent l'échantillon aux annonces similaires à ton bien.
           </p>
-          <p className="hint">Laisse min et/ou max vides pour ne pas borner ce critère.</p>
+          <p className="hint">Laisse un champ vide pour ne pas borner ce critère.</p>
           <div className="row">
-            <div className="range">
-              <span className="range-label">Salles de bain</span>
-              <div className="range-inputs">
-                <input type="number" min="0" step="1" value={bathMin}
-                  onChange={(e) => setBathMin(e.target.value)} placeholder="min" aria-label="Salles de bain min" />
-                <span className="range-sep">–</span>
-                <input type="number" min="0" step="1" value={bathMax}
-                  onChange={(e) => setBathMax(e.target.value)} placeholder="max" aria-label="Salles de bain max" />
-              </div>
-            </div>
+            <label>
+              Salles de bain
+              <input type="number" min="0" step="1" value={bathrooms}
+                onChange={(e) => setBathrooms(e.target.value)} placeholder="ex : 1" />
+            </label>
             <div className="range">
               <span className="range-label">Capacité (voyageurs)</span>
               <div className="range-inputs">
@@ -221,23 +194,6 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
                   onChange={(e) => setGuestMax(e.target.value)} placeholder="max" aria-label="Capacité max" />
               </div>
             </div>
-          </div>
-          <div className="row">
-            <div className="range">
-              <span className="range-label">Note (0–5)</span>
-              <div className="range-inputs">
-                <input type="number" min="0" max="5" step="0.5" value={ratingMin}
-                  onChange={(e) => setRatingMin(e.target.value)} placeholder="min" aria-label="Note min" />
-                <span className="range-sep">–</span>
-                <input type="number" min="0" max="5" step="0.5" value={ratingMax}
-                  onChange={(e) => setRatingMax(e.target.value)} placeholder="max" aria-label="Note max" />
-              </div>
-            </div>
-            <label>
-              Nombre d'avis min
-              <input type="number" min="0" step="1" value={reviewMin}
-                onChange={(e) => setReviewMin(e.target.value)} placeholder="ex : 10" />
-            </label>
           </div>
           <div className="filter-checks">
             <label className="checkbox">
