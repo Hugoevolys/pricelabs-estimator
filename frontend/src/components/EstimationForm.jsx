@@ -14,7 +14,6 @@ export default function EstimationForm({ onSubmit, loading }) {
 
   const [bedrooms, setBedrooms] = useState("2");
   const [currency, setCurrency] = useState("EUR");
-  const [version, setVersion] = useState("2");
   const [demo, setDemo] = useState(true);
 
   // Filtres avancés (uniquement ceux réellement supportés par l'API PriceLabs)
@@ -69,7 +68,7 @@ export default function EstimationForm({ onSubmit, loading }) {
       longitude: longitude.trim(),
       bedrooms: bedrooms.trim(),
       currency,
-      version,
+      version: "2",
       monthly: "true",
       demo: demo ? "true" : "false",
       filters: buildFilters(),
@@ -156,7 +155,7 @@ export default function EstimationForm({ onSubmit, loading }) {
 
       <div className="row">
         <label>
-          Chambres (ex : 2 ou 1,2,3)
+          Chambres (ex : 2 )
           <input
             type="text"
             value={bedrooms}
@@ -176,14 +175,6 @@ export default function EstimationForm({ onSubmit, loading }) {
       </div>
 
       <div className="row">
-        <label>
-          Version API
-          <select value={version} onChange={(e) => setVersion(e.target.value)}>
-            <option value="2">Version 2 (recommandée)</option>
-            <option value="1">Version 1 (ancienne)</option>
-          </select>
-        </label>
-
         <label className="checkbox">
           <input
             type="checkbox"
