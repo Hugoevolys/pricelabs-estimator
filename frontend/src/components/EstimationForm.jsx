@@ -3,19 +3,31 @@ import { useState } from "react";
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD"];
 
 export default function EstimationForm({ onSubmit, loading }) {
-  const [address, setAddress] = useState("");
+  // Adresse découpée en champs distincts (recomposée avant l'envoi)
+  const [streetNumber, setStreetNumber] = useState("");
+  const [street, setStreet] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+
   const [bedrooms, setBedrooms] = useState("2");
   const [currency, setCurrency] = useState("EUR");
   const [version, setVersion] = useState("2");
   const [demo, setDemo] = useState(true);
 
   // Filtres avancés (uniquement ceux réellement supportés par l'API PriceLabs)
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true); // ouverts par défaut
   const [bathrooms, setBathrooms] = useState("");   // salles de bain min
   const [maxGuest, setMaxGuest] = useState("");      // capacité min
   const [ratingMin, setRatingMin] = useState("");    // note min des comparables
   const [pool, setPool] = useState(false);
   const [hottub, setHottub] = useState(false);
+
+  // Recompose une adresse propre : "12 rue de la Paix, 75002 Paris"
+  function buildAddress() {
+    const line1 = [streetNumber.trim(), street.trim()].filter(Boolean).join(" ");
+    const line2 = [postalCode.trim(), city.trim()].filter(Boolean).join(" ");
+    return [line1, line2].filter(Boolean).join(", ");
+  }
 
   function buildFilters() {
     const f = {};
@@ -30,7 +42,7 @@ export default function EstimationForm({ onSubmit, loading }) {
   function submit(e) {
     e.preventDefault();
     onSubmit({
-      address: address.trim(),
+      address: buildAddress(),
       bedrooms: bedrooms.trim(),
       currency,
       version,
@@ -44,17 +56,54 @@ export default function EstimationForm({ onSubmit, loading }) {
     <form className="card form" onSubmit={submit}>
       <h2>Paramètres de l'estimation</h2>
 
-      <label>
-        Adresse complète du bien
-        <input
-          type="text"
-          placeholder="ex : 12 rue de la Paix, 75002 Paris"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          required={!demo}
-        />
+      <fieldset className="address-group">
+        <legend>Adresse du bien</legend>
+        <div className="row">
+          <label className="col-num">
+            Numéro
+            <input
+              type="text"
+              placeholder="ex : 12"
+              value={streetNumber}
+              onChange={(e) => setStreetNumber(e.target.value)}
+            />
+          </label>
+          <label className="col-grow">
+            Rue
+            <input
+              type="text"
+              placeholder="ex : rue de la Paix"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              required={!demo}
+            />
+          </label>
+        </div>
+        <div className="row">
+          <label className="col-num">
+            Code postal
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="ex : 75002"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              required={!demo}
+            />
+          </label>
+          <label className="col-grow">
+            Ville
+            <input
+              type="text"
+              placeholder="ex : Paris"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required={!demo}
+            />
+          </label>
+        </div>
         <span className="hint">Numéro, rue, code postal et ville → meilleur géocodage.</span>
-      </label>
+      </fieldset>
 
       <div className="row">
         <label>
