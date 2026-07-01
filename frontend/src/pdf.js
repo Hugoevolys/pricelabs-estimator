@@ -108,31 +108,57 @@ export async function downloadReportPdf({ resultsEl, advisor, address, logoUrl }
     )
   );
 
+  const SCALE = 2;
+  // Zones à ne jamais couper (graphiques + grilles de KPIs), mesurées avant capture
+  const wrapTop = wrap.getBoundingClientRect().top;
+  const blocks = [...wrap.querySelectorAll(".chart, .kpi-grid")].map((el) => {
+    const r = el.getBoundingClientRect();
+    return { top: (r.top - wrapTop) * SCALE, bottom: (r.bottom - wrapTop) * SCALE };
+  });
+
   const canvas = await html2canvas(wrap, {
-    scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,
+    scale: SCALE, backgroundColor: "#ffffff", useCORS: true, logging: false,
   });
   document.body.removeChild(wrap);
 
   const pdf = new jsPDF("p", "mm", "a4");
-  const pageW = 210, pageH = 297, margin = 10;
+  const pageW = 210, pageH = 297, margin = 10, footerH = 30;
   const imgW = pageW - margin * 2;
-  const imgH = (canvas.height * imgW) / canvas.width;
-  const img = canvas.toDataURL("image/jpeg", 0.92); // JPEG = PDF beaucoup plus léger
+  const pxPerMm = canvas.width / imgW;
+  const pageContentPx = (pageH - margin - footerH) * pxPerMm;
 
-  // Pagination : on décale l'image page par page
-  let heightLeft = imgH;
-  let position = margin;
-  pdf.addImage(img, "JPEG", margin, position, imgW, imgH);
-  heightLeft -= pageH - margin * 2;
-  while (heightLeft > 0) {
-    pdf.addPage();
-    position = margin - (imgH - heightLeft);
-    pdf.addImage(img, "JPEG", margin, position, imgW, imgH);
-    heightLeft -= pageH - margin * 2;
+  // Construit des tranches de page qui ne traversent aucun bloc insécable
+  const total = canvas.height;
+  const slices = [];
+  let y = 0;
+  while (y < total - 1) {
+    let end = Math.min(y + pageContentPx, total);
+    if (end < total) {
+      for (const b of blocks) {
+        if (b.top > y && b.top < end && b.bottom > end) { end = b.top; break; }
+      }
+    }
+    if (end <= y) end = Math.min(y + pageContentPx, total); // garde-fou anti-boucle
+    end = Math.round(end);
+    slices.push([y, end]);
+    y = end;
   }
 
+  // Rend chaque tranche sur sa propre page
+  slices.forEach(([sy, ey], i) => {
+    if (i > 0) pdf.addPage();
+    const h = ey - sy;
+    const tmp = document.createElement("canvas");
+    tmp.width = canvas.width;
+    tmp.height = h;
+    const ctx = tmp.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, tmp.width, tmp.height);
+    ctx.drawImage(canvas, 0, sy, canvas.width, h, 0, 0, canvas.width, h);
+    pdf.addImage(tmp.toDataURL("image/jpeg", 0.92), "JPEG", margin, margin, imgW, h / pxPerMm);
+  });
+
   // Pied de page légal en bas de la DERNIÈRE page (bande blanche + texte)
-  const footerH = 34;
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, pageH - footerH, pageW, footerH, "F");
   pdf.setDrawColor(0, 40, 110);
@@ -144,10 +170,10 @@ export async function downloadReportPdf({ resultsEl, advisor, address, logoUrl }
   const maxW = pageW - margin * 2;
   const l1 = pdf.splitTextToSize(FOOTER_FIXED, maxW);
   const l2 = pdf.splitTextToSize(advisorLine(advisor), maxW);
-  let y = pageH - footerH + 8;
-  pdf.text(l1, margin, y);
-  y += l1.length * 3.3 + 2.5;
-  pdf.text(l2, margin, y);
+  let fy = pageH - footerH + 8;
+  pdf.text(l1, margin, fy);
+  fy += l1.length * 3.3 + 2.5;
+  pdf.text(l2, margin, fy);
 
   const slug = (address || "bien").slice(0, 40).replace(/[^\w-]+/g, "_");
   pdf.save(`estimation-evolys-${slug}.pdf`);
