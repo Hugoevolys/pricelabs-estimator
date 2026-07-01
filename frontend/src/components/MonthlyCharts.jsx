@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, BarChart, Bar,
 } from "recharts";
 
-const COLORS = ["#2563eb", "#93c5fd", "#1e40af", "#f59e0b", "#10b981"];
+const COLORS = ["#00286e", "#5b7bc4", "#1e40af", "#f59e0b", "#10b981"];
 
 function Chart({ title, data, keys, type = "line" }) {
   if (!data || data.length === 0) return null;

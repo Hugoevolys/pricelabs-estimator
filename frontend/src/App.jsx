@@ -46,6 +46,9 @@ export default function App() {
   return (
     <div className="app">
       <header>
+        <div className="brand-bar">
+          <img src="/evolys-logo.svg" alt="Evolys" className="brand-logo" />
+        </div>
         <h1>Estimateur de revenus — Location courte durée</h1>
         <p className="subtitle">Basé sur l'API PriceLabs Revenue Estimator</p>
         {status && (

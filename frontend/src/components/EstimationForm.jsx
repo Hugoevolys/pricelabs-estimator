@@ -19,9 +19,12 @@ export default function EstimationForm({ onSubmit, loading }) {
 
   // Filtres avancés (uniquement ceux réellement supportés par l'API PriceLabs)
   const [showFilters, setShowFilters] = useState(true); // ouverts par défaut
-  const [bathrooms, setBathrooms] = useState("");   // salles de bain min
-  const [maxGuest, setMaxGuest] = useState("");      // capacité min
+  const [bathMin, setBathMin] = useState("");        // salles de bain min
+  const [bathMax, setBathMax] = useState("");        // salles de bain max
+  const [guestMin, setGuestMin] = useState("");      // capacité min
+  const [guestMax, setGuestMax] = useState("");      // capacité max
   const [ratingMin, setRatingMin] = useState("");    // note min des comparables
+  const [ratingMax, setRatingMax] = useState("");    // note max des comparables
   const [reviewMin, setReviewMin] = useState("");    // nombre d'avis min des comparables
   const [pool, setPool] = useState(false);
   const [hottub, setHottub] = useState(false);
@@ -33,13 +36,27 @@ export default function EstimationForm({ onSubmit, loading }) {
     return [line1, line2].filter(Boolean).join(", ");
   }
 
+  // Encadre une valeur entière : gt = min-1 (≥ min), lt = max+1 (≤ max)
+  function intRange(min, max) {
+    const o = {};
+    if (min !== "") o.gt = Number(min) - 1;
+    if (max !== "") o.lt = Number(max) + 1;
+    return Object.keys(o).length ? o : null;
+  }
+
   function buildFilters() {
     const f = {};
     if (pool) f.pool = 1;
     if (hottub) f.hottub = 1;
-    if (bathrooms) f.bathroom = { gt: Number(bathrooms) - 1 }; // "au moins N"
-    if (maxGuest) f.max_guest = { gt: Number(maxGuest) - 1 };
-    if (ratingMin) f.ratings = { gt: Number(ratingMin) };
+    const bath = intRange(bathMin, bathMax);
+    if (bath) f.bathroom = bath;
+    const guests = intRange(guestMin, guestMax);
+    if (guests) f.max_guest = guests;
+    // Note (décimale) : bornes directes
+    const rating = {};
+    if (ratingMin !== "") rating.gt = Number(ratingMin);
+    if (ratingMax !== "") rating.lt = Number(ratingMax);
+    if (Object.keys(rating).length) f.ratings = rating;
     if (reviewMin) f.review_count = { gt: Number(reviewMin) - 1 }; // "au moins N avis"
     return Object.keys(f).length ? JSON.stringify(f) : "";
   }
@@ -190,24 +207,40 @@ export default function EstimationForm({ onSubmit, loading }) {
           <p className="hint">
             Ces filtres restreignent l'échantillon aux annonces similaires à ton bien.
           </p>
+          <p className="hint">Laisse min et/ou max vides pour ne pas borner ce critère.</p>
           <div className="row">
-            <label>
-              Salles de bain (au moins)
-              <input type="number" min="0" step="1" value={bathrooms}
-                onChange={(e) => setBathrooms(e.target.value)} placeholder="ex : 1" />
-            </label>
-            <label>
-              Capacité min (voyageurs)
-              <input type="number" min="0" step="1" value={maxGuest}
-                onChange={(e) => setMaxGuest(e.target.value)} placeholder="ex : 4" />
-            </label>
+            <div className="range">
+              <span className="range-label">Salles de bain</span>
+              <div className="range-inputs">
+                <input type="number" min="0" step="1" value={bathMin}
+                  onChange={(e) => setBathMin(e.target.value)} placeholder="min" aria-label="Salles de bain min" />
+                <span className="range-sep">–</span>
+                <input type="number" min="0" step="1" value={bathMax}
+                  onChange={(e) => setBathMax(e.target.value)} placeholder="max" aria-label="Salles de bain max" />
+              </div>
+            </div>
+            <div className="range">
+              <span className="range-label">Capacité (voyageurs)</span>
+              <div className="range-inputs">
+                <input type="number" min="0" step="1" value={guestMin}
+                  onChange={(e) => setGuestMin(e.target.value)} placeholder="min" aria-label="Capacité min" />
+                <span className="range-sep">–</span>
+                <input type="number" min="0" step="1" value={guestMax}
+                  onChange={(e) => setGuestMax(e.target.value)} placeholder="max" aria-label="Capacité max" />
+              </div>
+            </div>
           </div>
           <div className="row">
-            <label>
-              Note minimale (0–5)
-              <input type="number" min="0" max="5" step="0.5" value={ratingMin}
-                onChange={(e) => setRatingMin(e.target.value)} placeholder="ex : 4" />
-            </label>
+            <div className="range">
+              <span className="range-label">Note (0–5)</span>
+              <div className="range-inputs">
+                <input type="number" min="0" max="5" step="0.5" value={ratingMin}
+                  onChange={(e) => setRatingMin(e.target.value)} placeholder="min" aria-label="Note min" />
+                <span className="range-sep">–</span>
+                <input type="number" min="0" max="5" step="0.5" value={ratingMax}
+                  onChange={(e) => setRatingMax(e.target.value)} placeholder="max" aria-label="Note max" />
+              </div>
+            </div>
             <label>
               Nombre d'avis min
               <input type="number" min="0" step="1" value={reviewMin}
