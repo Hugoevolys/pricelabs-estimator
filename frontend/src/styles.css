@@ -108,6 +108,15 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 button[type="submit"]:hover:not(:disabled) { background: var(--brand-dark); }
 
+.advisor h2 { color: var(--brand); }
+.results-toolbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin: 0 0 16px;
+}
+.results-toolbar button { background: var(--brand); }
+.results-toolbar button:hover:not(:disabled) { background: var(--brand-dark); }
+.results-toolbar .hint { margin: 0; }
+
 .warn { color: #b45309; font-size: 0.85rem; margin: 10px 0 0; }
 .error {
   background: #fef2f2; color: #b91c1c; padding: 12px 16px;
