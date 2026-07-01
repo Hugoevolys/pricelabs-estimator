@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import EstimationForm from "./components/EstimationForm.jsx";
 import ResultsPanel from "./components/ResultsPanel.jsx";
-import { fetchEstimate, fetchStatus } from "./api.js";
+import { fetchEstimate } from "./api.js";
 import { normalize } from "./normalize.js";
 import { downloadReportPdf } from "./pdf.js";
 
@@ -21,7 +21,6 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [source, setSource] = useState("");
   const [currency, setCurrency] = useState("EUR");
-  const [status, setStatus] = useState(null);
   const [propertyAddress, setPropertyAddress] = useState("");
   const [advisor, setAdvisor] = useState(loadAdvisor);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -33,15 +32,6 @@ export default function App() {
 
   const advisorComplete =
     advisor.name && advisor.city && advisor.rsac && advisor.address;
-
-  async function refreshStatus() {
-    try {
-      setStatus(await fetchStatus());
-    } catch {
-      setStatus(null);
-    }
-  }
-  useEffect(() => { refreshStatus(); }, []);
 
   async function handleSubmit(params) {
     setLoading(true);
@@ -58,7 +48,6 @@ export default function App() {
         setResult(norm);
         setSource(json.source);
       }
-      refreshStatus();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -92,12 +81,6 @@ export default function App() {
         </div>
         <h1>Estimateur de revenus — Location courte durée</h1>
         <p className="subtitle">Basé sur l'API PriceLabs Revenue Estimator</p>
-        {status && (
-          <div className="quota">
-            Appels réels effectués : <strong>{status.callsUsed}</strong>
-            {status.cachedQueries > 0 && ` · ${status.cachedQueries} en cache`}
-          </div>
-        )}
       </header>
 
       <main>
