@@ -1,8 +1,9 @@
 import { useState } from "react";
+import AdvisorFields from "./AdvisorFields.jsx";
 
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD"];
 
-export default function EstimationForm({ onSubmit, loading }) {
+export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorChange }) {
   // Adresse découpée en champs distincts (recomposée avant l'envoi)
   const [streetNumber, setStreetNumber] = useState("");
   const [street, setStreet] = useState("");
@@ -253,6 +254,8 @@ export default function EstimationForm({ onSubmit, loading }) {
           </p>
         </div>
       )}
+
+      <AdvisorFields value={advisor} onChange={onAdvisorChange} />
 
       <button type="submit" disabled={loading}>
         {loading ? "Estimation en cours…" : "Estimer les revenus"}

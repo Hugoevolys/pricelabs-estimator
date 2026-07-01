@@ -3,8 +3,8 @@ export default function AdvisorFields({ value, onChange }) {
   const set = (k) => (e) => onChange({ ...value, [k]: e.target.value });
 
   return (
-    <div className="card form advisor">
-      <h2>Informations du conseiller (pied de page du PDF)</h2>
+    <div className="advisor">
+      <h3>Informations du conseiller</h3>
       <p className="hint">
         Ces champs remplissent les mentions légales en bas du compte rendu PDF. Ils sont mémorisés sur cet appareil.
       </p>

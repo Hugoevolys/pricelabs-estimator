@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import EstimationForm from "./components/EstimationForm.jsx";
 import ResultsPanel from "./components/ResultsPanel.jsx";
-import AdvisorFields from "./components/AdvisorFields.jsx";
 import { fetchEstimate, fetchStatus } from "./api.js";
 import { normalize } from "./normalize.js";
 import { downloadReportPdf } from "./pdf.js";
@@ -102,9 +101,12 @@ export default function App() {
       </header>
 
       <main>
-        <EstimationForm onSubmit={handleSubmit} loading={loading} />
-
-        <AdvisorFields value={advisor} onChange={setAdvisor} />
+        <EstimationForm
+          onSubmit={handleSubmit}
+          loading={loading}
+          advisor={advisor}
+          onAdvisorChange={setAdvisor}
+        />
 
         {error && <div className="error">{error}</div>}
 
