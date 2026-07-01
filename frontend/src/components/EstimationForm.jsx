@@ -8,6 +8,9 @@ export default function EstimationForm({ onSubmit, loading }) {
   const [street, setStreet] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
+  // Coordonnées GPS optionnelles (calent la localisation précisément si renseignées)
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
 
   const [bedrooms, setBedrooms] = useState("2");
   const [currency, setCurrency] = useState("EUR");
@@ -19,6 +22,7 @@ export default function EstimationForm({ onSubmit, loading }) {
   const [bathrooms, setBathrooms] = useState("");   // salles de bain min
   const [maxGuest, setMaxGuest] = useState("");      // capacité min
   const [ratingMin, setRatingMin] = useState("");    // note min des comparables
+  const [reviewMin, setReviewMin] = useState("");    // nombre d'avis min des comparables
   const [pool, setPool] = useState(false);
   const [hottub, setHottub] = useState(false);
 
@@ -36,6 +40,7 @@ export default function EstimationForm({ onSubmit, loading }) {
     if (bathrooms) f.bathroom = { gt: Number(bathrooms) - 1 }; // "au moins N"
     if (maxGuest) f.max_guest = { gt: Number(maxGuest) - 1 };
     if (ratingMin) f.ratings = { gt: Number(ratingMin) };
+    if (reviewMin) f.review_count = { gt: Number(reviewMin) - 1 }; // "au moins N avis"
     return Object.keys(f).length ? JSON.stringify(f) : "";
   }
 
@@ -43,6 +48,8 @@ export default function EstimationForm({ onSubmit, loading }) {
     e.preventDefault();
     onSubmit({
       address: buildAddress(),
+      latitude: latitude.trim(),
+      longitude: longitude.trim(),
       bedrooms: bedrooms.trim(),
       currency,
       version,
@@ -103,6 +110,31 @@ export default function EstimationForm({ onSubmit, loading }) {
           </label>
         </div>
         <span className="hint">Numéro, rue, code postal et ville → meilleur géocodage.</span>
+        <div className="row">
+          <label>
+            Latitude <span className="opt">(optionnel)</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="ex : 48.8698"
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+            />
+          </label>
+          <label>
+            Longitude <span className="opt">(optionnel)</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="ex : 2.3078"
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+            />
+          </label>
+        </div>
+        <span className="hint">
+          Si renseignées, les coordonnées GPS calent la localisation précisément (prioritaire sur l'adresse).
+        </span>
       </fieldset>
 
       <div className="row">
@@ -176,16 +208,21 @@ export default function EstimationForm({ onSubmit, loading }) {
               <input type="number" min="0" max="5" step="0.5" value={ratingMin}
                 onChange={(e) => setRatingMin(e.target.value)} placeholder="ex : 4" />
             </label>
-            <div className="filter-checks">
-              <label className="checkbox">
-                <input type="checkbox" checked={pool} onChange={(e) => setPool(e.target.checked)} />
-                Piscine
-              </label>
-              <label className="checkbox">
-                <input type="checkbox" checked={hottub} onChange={(e) => setHottub(e.target.checked)} />
-                Jacuzzi
-              </label>
-            </div>
+            <label>
+              Nombre d'avis min
+              <input type="number" min="0" step="1" value={reviewMin}
+                onChange={(e) => setReviewMin(e.target.value)} placeholder="ex : 10" />
+            </label>
+          </div>
+          <div className="filter-checks">
+            <label className="checkbox">
+              <input type="checkbox" checked={pool} onChange={(e) => setPool(e.target.checked)} />
+              Piscine
+            </label>
+            <label className="checkbox">
+              <input type="checkbox" checked={hottub} onChange={(e) => setHottub(e.target.checked)} />
+              Jacuzzi
+            </label>
           </div>
           <p className="hint">
             En mode démo, les filtres sont ignorés (données d'exemple fixes).
