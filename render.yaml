@@ -13,5 +13,3 @@ services:
     envVars:
       - key: PRICELABS_API_KEY
         sync: false          # à saisir manuellement dans le dashboard Render
-      - key: MAX_REAL_CALLS
-        value: "20"

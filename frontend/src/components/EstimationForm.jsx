@@ -187,7 +187,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
       </button>
 
       <p className="warn">
-        ⚠️ Chaque estimation consomme 1 de tes 20 appels
+        ⚠️ Chaque estimation consomme 1 appel réel PriceLabs
         (sauf si la même requête est déjà en cache).
       </p>
     </form>

@@ -94,7 +94,7 @@ export default function App() {
         <p className="subtitle">Basé sur l'API PriceLabs Revenue Estimator</p>
         {status && (
           <div className="quota">
-            Appels réels restants : <strong>{status.callsRemaining}/{status.maxCalls}</strong>
+            Appels réels effectués : <strong>{status.callsUsed}</strong>
             {status.cachedQueries > 0 && ` · ${status.cachedQueries} en cache`}
           </div>
         )}

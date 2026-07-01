@@ -15,9 +15,6 @@ const PORT = process.env.PORT || 3001;
 const API_KEY = process.env.PRICELABS_API_KEY;
 const API_URL = "https://api.pricelabs.co/v1/revenue/estimator";
 
-// Garde-fou : nombre max d'appels RÉELS autorisés (tu n'as que 20 appels gratuits).
-const MAX_REAL_CALLS = parseInt(process.env.MAX_REAL_CALLS || "20", 10);
-
 // ---- Persistance simple sur fichier (cache + compteur d'appels) ----
 const DATA_FILE = path.join(__dirname, "cache-data.json");
 
@@ -55,12 +52,10 @@ function cacheKey(params) {
   });
 }
 
-// ---- Route: état / quota ----
+// ---- Route: état (compteur informatif, sans plafond) ----
 app.get("/api/status", (req, res) => {
   res.json({
     callsUsed: store.callsUsed,
-    callsRemaining: Math.max(0, MAX_REAL_CALLS - store.callsUsed),
-    maxCalls: MAX_REAL_CALLS,
     cachedQueries: Object.keys(store.cache).length,
     hasApiKey: Boolean(API_KEY),
   });
@@ -93,27 +88,21 @@ app.get("/api/estimate", async (req, res) => {
   // 1) MODE DÉMO : aucune consommation d'appel
   if (demo === "true") {
     const data = version === "1" ? sampleV1 : sampleV2;
-    return res.json({ source: "demo", callsRemaining: MAX_REAL_CALLS - store.callsUsed, data });
+    return res.json({ source: "demo", callsUsed: store.callsUsed, data });
   }
 
   // 2) CACHE : si déjà interrogé, on ne reconsomme pas
   if (store.cache[key]) {
     return res.json({
       source: "cache",
-      callsRemaining: MAX_REAL_CALLS - store.callsUsed,
+      callsUsed: store.callsUsed,
       data: store.cache[key],
     });
   }
 
-  // 3) Garde-fou quota
+  // 3) Clé API requise pour un appel réel
   if (!API_KEY) {
     return res.status(500).json({ error: "Clé API absente côté serveur (PRICELABS_API_KEY)." });
-  }
-  if (store.callsUsed >= MAX_REAL_CALLS) {
-    return res.status(429).json({
-      error: `Quota d'appels réels atteint (${MAX_REAL_CALLS}). Utilise le mode démo ou une requête déjà en cache.`,
-      callsRemaining: 0,
-    });
   }
 
   // 4) Appel RÉEL à PriceLabs
@@ -148,7 +137,7 @@ app.get("/api/estimate", async (req, res) => {
       return res.status(apiRes.status).json({
         error: `Erreur API PriceLabs (${apiRes.status}).`,
         detail: text.slice(0, 500),
-        callsRemaining: MAX_REAL_CALLS - store.callsUsed,
+        callsUsed: store.callsUsed,
       });
     }
 
@@ -160,7 +149,7 @@ app.get("/api/estimate", async (req, res) => {
 
     return res.json({
       source: "api",
-      callsRemaining: MAX_REAL_CALLS - store.callsUsed,
+      callsUsed: store.callsUsed,
       data,
     });
   } catch (e) {
@@ -184,5 +173,5 @@ app.get("/", (_req, res) => res.send("PriceLabs Estimator backend OK"));
 
 app.listen(PORT, () => {
   console.log(`Backend démarré sur http://localhost:${PORT}`);
-  console.log(`Appels réels utilisés : ${store.callsUsed}/${MAX_REAL_CALLS}`);
+  console.log(`Appels réels utilisés : ${store.callsUsed}`);
 });
