@@ -124,9 +124,9 @@ app.get("/api/estimate", async (req, res) => {
     if (latitude) url.searchParams.set("latitude", latitude);
     if (longitude) url.searchParams.set("longitude", longitude);
     url.searchParams.set("currency", currency);
-    // ⚠️ Le nom exact du paramètre côté PriceLabs contient un espace : "Bedroom category"
-    url.searchParams.set("Bedroom category", bedrooms);
-    url.searchParams.set("Monthly", monthly);
+    // PriceLabs v2 attend le paramètre en snake_case : bedroom_category
+    url.searchParams.set("bedroom_category", bedrooms);
+    url.searchParams.set("monthly", monthly);
     if (filters) {
       // filters passé en JSON depuis le front → on le transmet en deepObject
       try {
