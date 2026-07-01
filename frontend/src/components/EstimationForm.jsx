@@ -14,8 +14,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
   const [bedrooms, setBedrooms] = useState("2");
   const [demo, setDemo] = useState(true);
 
-  // Filtres avancés (uniquement ceux réellement supportés par l'API PriceLabs)
-  const [showFilters, setShowFilters] = useState(true); // ouverts par défaut
+  // Filtres (uniquement ceux réellement supportés par l'API PriceLabs)
   const [bathrooms, setBathrooms] = useState("");    // nombre de salles de bain
   const [guestMin, setGuestMin] = useState("");      // capacité min
   const [guestMax, setGuestMax] = useState("");      // capacité max
@@ -154,6 +153,35 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
       </div>
 
       <div className="row">
+        <label>
+          Salles de bain
+          <input type="number" min="0" step="1" value={bathrooms}
+            onChange={(e) => setBathrooms(e.target.value)} placeholder="ex : 1" />
+        </label>
+        <div className="range">
+          <span className="range-label">Capacité (voyageurs)</span>
+          <div className="range-inputs">
+            <input type="number" min="0" step="1" value={guestMin}
+              onChange={(e) => setGuestMin(e.target.value)} placeholder="min" aria-label="Capacité min" />
+            <span className="range-sep">–</span>
+            <input type="number" min="0" step="1" value={guestMax}
+              onChange={(e) => setGuestMax(e.target.value)} placeholder="max" aria-label="Capacité max" />
+          </div>
+        </div>
+      </div>
+
+      <div className="filter-checks">
+        <label className="checkbox">
+          <input type="checkbox" checked={pool} onChange={(e) => setPool(e.target.checked)} />
+          Piscine
+        </label>
+        <label className="checkbox">
+          <input type="checkbox" checked={hottub} onChange={(e) => setHottub(e.target.checked)} />
+          Jacuzzi
+        </label>
+      </div>
+
+      <div className="row">
         <label className="checkbox">
           <input
             type="checkbox"
@@ -163,53 +191,6 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
           Mode démo (ne consomme aucun appel)
         </label>
       </div>
-
-      <button
-        type="button"
-        className="link-btn"
-        onClick={() => setShowFilters((s) => !s)}
-      >
-        {showFilters ? "▾ Masquer les filtres avancés" : "▸ Filtres avancés (plus de précision)"}
-      </button>
-
-      {showFilters && (
-        <div className="filters">
-          <p className="hint">
-            Ces filtres restreignent l'échantillon aux annonces similaires à ton bien.
-          </p>
-          <p className="hint">Laisse un champ vide pour ne pas borner ce critère.</p>
-          <div className="row">
-            <label>
-              Salles de bain
-              <input type="number" min="0" step="1" value={bathrooms}
-                onChange={(e) => setBathrooms(e.target.value)} placeholder="ex : 1" />
-            </label>
-            <div className="range">
-              <span className="range-label">Capacité (voyageurs)</span>
-              <div className="range-inputs">
-                <input type="number" min="0" step="1" value={guestMin}
-                  onChange={(e) => setGuestMin(e.target.value)} placeholder="min" aria-label="Capacité min" />
-                <span className="range-sep">–</span>
-                <input type="number" min="0" step="1" value={guestMax}
-                  onChange={(e) => setGuestMax(e.target.value)} placeholder="max" aria-label="Capacité max" />
-              </div>
-            </div>
-          </div>
-          <div className="filter-checks">
-            <label className="checkbox">
-              <input type="checkbox" checked={pool} onChange={(e) => setPool(e.target.checked)} />
-              Piscine
-            </label>
-            <label className="checkbox">
-              <input type="checkbox" checked={hottub} onChange={(e) => setHottub(e.target.checked)} />
-              Jacuzzi
-            </label>
-          </div>
-          <p className="hint">
-            En mode démo, les filtres sont ignorés (données d'exemple fixes).
-          </p>
-        </div>
-      )}
 
       <AdvisorFields value={advisor} onChange={onAdvisorChange} />
 
