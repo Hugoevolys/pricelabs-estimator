@@ -15,8 +15,61 @@ function advisorLine(a) {
   );
 }
 
-// Construit un conteneur hors-écran (header Evolys + copie du compte rendu) pour la capture
-function buildPrintNode({ resultsEl, address, dateStr, logoUrl }) {
+// Rasterise un SVG en <img> PNG (html2canvas rend mal les SVG Recharts)
+async function svgToImg(svgEl, width, height) {
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", width);
+  clone.setAttribute("height", height);
+  const xml = new XMLSerializer().serializeToString(clone);
+  const src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+
+  const image = new Image();
+  await new Promise((res, rej) => {
+    image.onload = res;
+    image.onerror = rej;
+    image.src = src;
+  });
+
+  const scale = 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(scale, scale);
+  ctx.drawImage(image, 0, 0, width, height);
+
+  const out = document.createElement("img");
+  out.src = canvas.toDataURL("image/png");
+  out.style.cssText = `width:${width}px;height:${height}px;display:block;`;
+  return out;
+}
+
+// Clone le compte rendu en remplaçant chaque graphique SVG par un PNG
+async function cloneResultsWithRasterCharts(resultsEl) {
+  const origSvgs = [...resultsEl.querySelectorAll("svg")];
+  const sizes = origSvgs.map((s) => {
+    const r = s.getBoundingClientRect();
+    return { w: Math.round(r.width) || s.clientWidth, h: Math.round(r.height) || s.clientHeight };
+  });
+
+  const clone = resultsEl.cloneNode(true);
+  const cloneSvgs = [...clone.querySelectorAll("svg")];
+  for (let i = 0; i < cloneSvgs.length; i++) {
+    const { w, h } = sizes[i] || {};
+    if (!w || !h) continue;
+    try {
+      const img = await svgToImg(origSvgs[i], w, h);
+      cloneSvgs[i].replaceWith(img);
+    } catch { /* garde le SVG si la rasterisation échoue */ }
+  }
+  return clone;
+}
+
+// Construit un conteneur hors-écran (header Evolys + compte rendu) pour la capture
+function buildPrintNode({ resultsClone, address, dateStr, logoUrl }) {
   const wrap = document.createElement("div");
   wrap.style.cssText =
     "position:fixed;left:-10000px;top:0;width:760px;background:#ffffff;padding:32px 32px 150px;" +
@@ -32,7 +85,7 @@ function buildPrintNode({ resultsEl, address, dateStr, logoUrl }) {
     `<div style="font-size:12px;color:#64748b;margin-top:4px;">Établie le ${dateStr}</div>`;
 
   wrap.appendChild(header);
-  wrap.appendChild(resultsEl.cloneNode(true));
+  wrap.appendChild(resultsClone);
   return wrap;
 }
 
@@ -41,15 +94,19 @@ export async function downloadReportPdf({ resultsEl, advisor, address, logoUrl }
     day: "2-digit", month: "long", year: "numeric",
   });
 
-  const wrap = buildPrintNode({ resultsEl, address, dateStr, logoUrl });
+  const resultsClone = await cloneResultsWithRasterCharts(resultsEl);
+  const wrap = buildPrintNode({ resultsClone, address, dateStr, logoUrl });
   document.body.appendChild(wrap);
 
-  // Attendre le chargement du logo pour qu'il apparaisse dans la capture
-  await new Promise((res) => {
-    const img = wrap.querySelector("img");
-    if (img && !img.complete) { img.onload = res; img.onerror = res; }
-    else res();
-  });
+  // Attendre le chargement de toutes les images (logo + graphiques rasterisés)
+  await Promise.all(
+    [...wrap.querySelectorAll("img")].map(
+      (img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise((res) => { img.onload = res; img.onerror = res; })
+    )
+  );
 
   const canvas = await html2canvas(wrap, {
     scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,
