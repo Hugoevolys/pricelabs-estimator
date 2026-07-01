@@ -12,7 +12,6 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
   const [longitude, setLongitude] = useState("");
 
   const [bedrooms, setBedrooms] = useState("2");
-  const [demo, setDemo] = useState(true);
 
   // Filtres (uniquement ceux réellement supportés par l'API PriceLabs)
   const [bathrooms, setBathrooms] = useState("");    // nombre de salles de bain
@@ -57,7 +56,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
       currency: "EUR",
       version: "2",
       monthly: "true",
-      demo: demo ? "true" : "false",
+      demo: "false",
       filters: buildFilters(),
     });
   }
@@ -85,7 +84,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
               placeholder="ex : rue de la Paix"
               value={street}
               onChange={(e) => setStreet(e.target.value)}
-              required={!demo}
+              required
             />
           </label>
         </div>
@@ -98,7 +97,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
               placeholder="ex : 75002"
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}
-              required={!demo}
+              required
             />
           </label>
           <label className="col-grow">
@@ -108,7 +107,7 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
               placeholder="ex : Paris"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              required={!demo}
+              required
             />
           </label>
         </div>
@@ -181,29 +180,16 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
         </label>
       </div>
 
-      <div className="row">
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={demo}
-            onChange={(e) => setDemo(e.target.checked)}
-          />
-          Mode démo (ne consomme aucun appel)
-        </label>
-      </div>
-
       <AdvisorFields value={advisor} onChange={onAdvisorChange} />
 
       <button type="submit" disabled={loading}>
         {loading ? "Estimation en cours…" : "Estimer les revenus"}
       </button>
 
-      {!demo && (
-        <p className="warn">
-          ⚠️ Mode réel : cette estimation consommera 1 de tes 20 appels
-          (sauf si la même requête est déjà en cache).
-        </p>
-      )}
+      <p className="warn">
+        ⚠️ Chaque estimation consomme 1 de tes 20 appels
+        (sauf si la même requête est déjà en cache).
+      </p>
     </form>
   );
 }

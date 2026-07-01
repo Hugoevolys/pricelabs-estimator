@@ -46,13 +46,18 @@ header h1 { font-size: 1.6rem; margin: 0 0 4px; color: var(--brand); }
 
 .form h2 { margin-top: 0; font-size: 1.1rem; }
 .form label { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--muted); gap: 6px; margin-bottom: 14px; }
-.form input[type="text"], .form select {
+.form input[type="text"], .form input[type="number"], .form select {
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1rem;
   color: var(--ink);
+  width: 100%;
 }
+/* Uniformise les champs nombre (retire les flèches natives) */
+.form input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.form input[type="number"]::-webkit-outer-spin-button,
+.form input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .form .row { display: flex; gap: 16px; }
 .form .row label { flex: 1; }
 .checkbox { flex-direction: row !important; align-items: center; color: var(--ink) !important; }
@@ -81,24 +86,13 @@ button {
 button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .hint { font-size: 0.75rem; color: var(--muted); margin: 4px 0 0; }
-.link-btn {
-  background: none; color: var(--brand); padding: 4px 0; font-weight: 600;
-  font-size: 0.9rem; text-align: left; margin-bottom: 12px;
-}
-.filters {
-  background: var(--brand-tint); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px 16px; margin-bottom: 14px;
-}
-.filters input[type="number"] {
-  padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem;
-  color: var(--ink); width: 100%;
-}
-.filter-checks { display: flex; gap: 20px; align-items: flex-end; padding-bottom: 14px; }
+.filter-checks { display: flex; gap: 20px; align-items: center; margin-bottom: 14px; }
 
 /* Fourchettes min–max */
 .range { flex: 1; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .range-label { font-size: 0.85rem; color: var(--muted); }
 .range-inputs { display: flex; align-items: center; gap: 8px; }
+.range-inputs input { flex: 1; min-width: 0; }
 .range-sep { color: var(--muted); }
 
 /* Focus au bleu marine */
