@@ -69,10 +69,10 @@ async function cloneResultsWithRasterCharts(resultsEl) {
 }
 
 // Construit un conteneur hors-écran (header Evolys + compte rendu) pour la capture
-function buildPrintNode({ resultsClone, address, dateStr, logoUrl }) {
+function buildPrintNode({ resultsClone, address, dateStr, logoUrl, width }) {
   const wrap = document.createElement("div");
   wrap.style.cssText =
-    "position:fixed;left:-10000px;top:0;width:760px;background:#ffffff;padding:32px 32px 150px;" +
+    `position:fixed;left:-10000px;top:0;width:${width}px;background:#ffffff;padding:32px;` +
     "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#101a33;";
 
   const header = document.createElement("div");
@@ -94,8 +94,15 @@ export async function downloadReportPdf({ resultsEl, advisor, address, logoUrl }
     day: "2-digit", month: "long", year: "numeric",
   });
 
+  // Largeur du gabarit calée sur la largeur des graphiques (remplissent la page, sans rognage)
+  const chartWidths = [...resultsEl.querySelectorAll(".recharts-wrapper, svg")]
+    .map((el) => el.getBoundingClientRect().width)
+    .filter((w) => w > 0);
+  const contentWidth = Math.round(Math.max(700, ...chartWidths));
+  const printWidth = contentWidth + 64; // + padding gauche/droite
+
   const resultsClone = await cloneResultsWithRasterCharts(resultsEl);
-  const wrap = buildPrintNode({ resultsClone, address, dateStr, logoUrl });
+  const wrap = buildPrintNode({ resultsClone, address, dateStr, logoUrl, width: printWidth });
   document.body.appendChild(wrap);
 
   // Attendre le chargement de toutes les images (logo + graphiques rasterisés)
