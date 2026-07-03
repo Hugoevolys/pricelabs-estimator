@@ -17,7 +17,6 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
   const [bathrooms, setBathrooms] = useState("");    // nombre de salles de bain
   const [guestMin, setGuestMin] = useState("");      // capacité min
   const [guestMax, setGuestMax] = useState("");      // capacité max
-  const [reviewMin, setReviewMin] = useState("");    // nombre d'avis min des comparables
   const [pool, setPool] = useState(false);
   const [hottub, setHottub] = useState(false);
 
@@ -44,7 +43,8 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
     if (bathrooms !== "") f.bathroom = { gt: Number(bathrooms) - 1, lt: Number(bathrooms) + 1 };
     const guests = intRange(guestMin, guestMax);
     if (guests) f.max_guest = guests;
-    if (reviewMin !== "") f.review_count = { gt: Number(reviewMin) - 1 }; // "au moins N avis"
+    // Toujours : ne comparer qu'avec des logements bien notés (note entre 4 et 5)
+    f.ratings = { gt: 4, lt: 5 };
     return Object.keys(f).length ? JSON.stringify(f) : "";
   }
 
@@ -159,14 +159,6 @@ export default function EstimationForm({ onSubmit, loading, advisor, onAdvisorCh
           <input type="number" min="0" step="1" value={bathrooms}
             onChange={(e) => setBathrooms(e.target.value)} placeholder="ex : 1" />
         </label>
-        <label>
-          Nombre d'avis min
-          <input type="number" min="0" step="1" value={reviewMin}
-            onChange={(e) => setReviewMin(e.target.value)} placeholder="ex : 10" />
-        </label>
-      </div>
-
-      <div className="row">
         <div className="range">
           <span className="range-label">Capacité (voyageurs)</span>
           <div className="range-inputs">
