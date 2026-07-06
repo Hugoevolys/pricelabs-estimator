@@ -43,27 +43,30 @@ async function svgToImg(svgEl, width, height) {
 
   const out = document.createElement("img");
   out.src = canvas.toDataURL("image/png");
-  out.style.cssText = `width:${width}px;height:${height}px;display:block;`;
+  // Responsive : le graphique remplit sa carte sans jamais déborder (aspect conservé)
+  out.style.cssText = "width:100%;height:auto;display:block;";
   return out;
 }
 
-// Clone le compte rendu en remplaçant chaque graphique SVG par un PNG
+// Clone le compte rendu en remplaçant chaque conteneur de graphique Recharts par un PNG responsive
 async function cloneResultsWithRasterCharts(resultsEl) {
-  const origSvgs = [...resultsEl.querySelectorAll("svg")];
-  const sizes = origSvgs.map((s) => {
-    const r = s.getBoundingClientRect();
-    return { w: Math.round(r.width) || s.clientWidth, h: Math.round(r.height) || s.clientHeight };
+  const origContainers = [...resultsEl.querySelectorAll(".recharts-responsive-container")];
+  const meta = origContainers.map((c) => {
+    const svg = c.querySelector("svg");
+    if (!svg) return null;
+    const r = svg.getBoundingClientRect();
+    return { svg, w: Math.round(r.width) || svg.clientWidth, h: Math.round(r.height) || svg.clientHeight };
   });
 
   const clone = resultsEl.cloneNode(true);
-  const cloneSvgs = [...clone.querySelectorAll("svg")];
-  for (let i = 0; i < cloneSvgs.length; i++) {
-    const { w, h } = sizes[i] || {};
-    if (!w || !h) continue;
+  const cloneContainers = [...clone.querySelectorAll(".recharts-responsive-container")];
+  for (let i = 0; i < cloneContainers.length; i++) {
+    const m = meta[i];
+    if (!m || !m.w || !m.h) continue;
     try {
-      const img = await svgToImg(origSvgs[i], w, h);
-      cloneSvgs[i].replaceWith(img);
-    } catch { /* garde le SVG si la rasterisation échoue */ }
+      const img = await svgToImg(m.svg, m.w, m.h);
+      cloneContainers[i].replaceWith(img); // remplace tout le conteneur (supprime la largeur fixe)
+    } catch { /* garde le graphique original si la rasterisation échoue */ }
   }
   return clone;
 }
@@ -94,11 +97,8 @@ export async function downloadReportPdf({ resultsEl, advisor, address, logoUrl }
     day: "2-digit", month: "long", year: "numeric",
   });
 
-  // Largeur du gabarit calée sur la largeur des graphiques (remplissent la page, sans rognage)
-  const chartWidths = [...resultsEl.querySelectorAll(".recharts-wrapper, svg")]
-    .map((el) => el.getBoundingClientRect().width)
-    .filter((w) => w > 0);
-  const contentWidth = Math.round(Math.max(700, ...chartWidths));
+  // Gabarit calé sur la largeur réelle du compte rendu (les graphiques, responsive, remplissent leur carte)
+  const contentWidth = Math.max(700, Math.ceil(resultsEl.getBoundingClientRect().width));
   const printWidth = contentWidth + 64; // + padding gauche/droite
 
   const resultsClone = await cloneResultsWithRasterCharts(resultsEl);
